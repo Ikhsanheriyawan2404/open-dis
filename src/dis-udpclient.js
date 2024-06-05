@@ -1,18 +1,17 @@
 const dgram = require('dgram');
 const dis = require("open-dis");
-const argv = require('yargs').argv;
 const DISUtils = require('./DISUtils');
 
 var utils = new DISUtils();
 
-var DEFAULT_HOST = 'localhost';
+var DEFAULT_HOST = '192.168.123.13';
 const DEFAULT_PORT = 4000
 
 /**
  * Read host & port as commandline arguments - or take the default if not given:
  */
-var host = argv.host || DEFAULT_HOST
-var port = argv.port || DEFAULT_PORT
+var host = DEFAULT_HOST
+var port = DEFAULT_PORT
 
 
 var client = dgram.createSocket('udp4');        /** Open a UDP-Client */

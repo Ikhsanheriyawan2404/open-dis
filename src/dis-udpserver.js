@@ -1,7 +1,7 @@
 const dgram = require('dgram');
 const express = require('express');
 const http = require('http');
-const socketIo = require('./socket.io');
+const socketIo = require('socket.io');
 const cors = require('cors'); // Import modul CORS
 const dis = require("open-dis");
 const DISUtils = require('./DISUtils');

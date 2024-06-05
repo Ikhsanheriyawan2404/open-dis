@@ -2,8 +2,7 @@
 FROM node:14-alpine
 
 # Create and change to the app directory
-WORKDIR /usr/src/app
-
+WORKDIR /usr
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
