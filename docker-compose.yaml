@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "4000:4000"
+      - "4000:4000/udp"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=4000
+      - UDP_PORT=4000
+      - HTTP_PORT=4000
+    volumes:
+      - .:/usr/src/app

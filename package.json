@@ -16,9 +16,6 @@
   ],
   "author": "Thomas Schneider",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/keckxde/node-disnetworkclient/issues"
-  },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
