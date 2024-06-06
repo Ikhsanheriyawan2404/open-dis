@@ -4,7 +4,7 @@ const DISUtils = require('./DISUtils');
 
 var utils = new DISUtils();
 
-var DEFAULT_HOST = '192.168.123.13';
+var DEFAULT_HOST = 'localhost';
 const DEFAULT_PORT = 4000
 
 /**
