@@ -1,16 +1,30 @@
-const dgram = require('dgram');
-const express = require('express');
-const http = require('http');
-const socketIo = require('./socket.io');
-const cors = require('cors'); // Import modul CORS
-const dis = require("open-dis");
-const DISUtils = require('./DISUtils');
-require('dotenv').config();
-const projector = require('ecef-projector');
+import dgram from 'dgram';
+import express from 'express';
+import http from 'http';
+import socketIo from './socket.io/index.js';
+import cors from 'cors';
+import dis from 'open-dis';
+import DISUtils from './DISUtils.js';
+import dotenv from 'dotenv';
+import projector from 'ecef-projector';
+// const Colyseus = require("colyseus.js");
+import * as Colyseus from "colyseus.js";
 
-let utils = new DISUtils();
+let controlClient;
+const client = new Colyseus.Client('ws://localhost:2567');
 
-const DEFAULT_HOST = '127.0.0.1';
+// client.join("wargaming").then(room => {
+//     controlClient = room
+//     console.log(room.sessionId, "joined", room.name);
+// }).catch(e => {
+//     console.log("JOIN ERROR", e);
+// });
+
+dotenv.config()
+
+const utils = new DISUtils();
+
+const DEFAULT_HOST = '0.0.0.0';
 const DEFAULT_PORT = 4000
 const DEFAULT_UDP_PORT = 4000;
 const DEFAULT_HTTP_PORT = 4000;
@@ -145,7 +159,7 @@ function getOrientationFromEuler(lat, lon, psi, theta) {
     let heading = psi * (180 / Math.PI);
 
     // Normalize the heading to be within -180 to 180 degrees
-    heading = (heading + 360) % 360;
+    heading = (heading + 360) % 360; 
     if (heading > 180) {
         heading -= 360;
     }
@@ -177,6 +191,7 @@ udpServer.on('message', (msg, rinfo) => {
         let disMessage = utils.DISObjectFromBuffer(msg);
         switch(disMessage.pduType) {
             case 1: // EntityState PDU:
+                console.log(disMessage.entityOrientation.psi)
                 let entityID = disMessage.entityID;
                 let location = disMessage.entityLocation;
                 let marking  = disMessage.marking.getMarking();
@@ -189,17 +204,23 @@ udpServer.on('message', (msg, rinfo) => {
                     disMessage.entityOrientation.theta
                 );
                 console.log({heading})
-                // Broadcast the message to all Socket.IO clients
-                io.emit('receiveEntityState', {
-                    entityID: entityID,
-                    location: {
+                controlClient.send('coba', {
                         x: gps[1],
                         y: gps[0],
                         z: gps[2],
-                    },
-                    marking: marking,
-                    heading
-                });
+                })
+                // Broadcast the message to all Socket.IO clients
+                // io.emit('receiveEntityState', {
+                //     entityID: entityID,
+                //     location: {
+                //         x: gps[1],
+                //         y: gps[0],
+                //         z: gps[2],
+                
+                //     },
+                //     marking: marking,
+                //     heading: Math.abs(heading)
+                // });
                 break;
             case 20: // Data PDU:
                 console.log("Got DataPDU:");
@@ -223,9 +244,8 @@ udpServer.on('error', (err) => {
 /**
  * Start listening on UDP port
  */
-udpServer.bind(udpPort, host, () => {
-    console.log(udpServer.address())
-    console.log(`UDP server listening on ${host}:${udpPort}`);
+udpServer.bind(udpPort, () => {
+    console.log(`UDP server listening on ${udpServer.address().address}:${udpPort}`);
 });
 
 /**

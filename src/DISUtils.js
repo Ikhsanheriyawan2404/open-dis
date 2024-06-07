@@ -1,4 +1,4 @@
-function DISUtils() 
+export default function DISUtils() 
 {
 
 
@@ -59,4 +59,4 @@ function DISUtils()
 
 }
 
-module.exports = DISUtils;
+// module.exports = DISUtils;
