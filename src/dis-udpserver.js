@@ -1,26 +1,16 @@
 import dgram from 'dgram';
+import dis from 'open-dis';
 import DISUtils from './DISUtils.js';
 import dotenv from 'dotenv';
 import projector from 'ecef-projector';
-// const Colyseus = require("colyseus.js");
 import * as Colyseus from "colyseus.js";
 
-let controlClient;
-const client = new Colyseus.Client('ws://localhost:2567');
-
-// client.join("wargaming").then(room => {
-//     controlClient = room
-//     console.log(room.sessionId, "joined", room.name);
-// }).catch(e => {
-//     console.log("JOIN ERROR", e);
-// });
-
 dotenv.config()
-dfdsf
+
 const utils = new DISUtils();
 
 const DEFAULT_HOST = '0.0.0.0';
-const DEFAULT_UDP_PORT = 3009;
+const DEFAULT_UDP_PORT = 4000;
 
 /**
  * Read host & port as commandline arguments - or take the default if not given:
@@ -32,6 +22,9 @@ const host = process.env.HOST || DEFAULT_HOST
  */
 const udpPort = process.env.UDP_PORT || DEFAULT_UDP_PORT;
 
+const client = new Colyseus.Client('ws://localhost:2567');
+let colyseusClient;
+
 async function joinRoom() {
     try {
         const room = await client.join("wargaming", {
@@ -39,6 +32,8 @@ async function joinRoom() {
             nama: "WGS 3D",
             jenisUser: "open-dis"
         });
+
+        colyseusClient = room;
 
         room.onMessage('onJoin', (info) => {
             console.log("Berhasil bergabung dengan room:", room.name);
@@ -48,9 +43,13 @@ async function joinRoom() {
 
         room.onMessage('onLeave', (info) => {
             console.log("Berhasil Keluar room:", room.name);
+            setTimeout(joinRoom, 5000)
         });
 
-        room.onMessage('onDispose', (msg) => {});
+        room.onMessage('onDispose', (msg) => {
+            console.log("Room hancur:", room.name);
+            setTimeout(joinRoom, 5000)
+        });
     } catch (error) {
         console.error("Room WGS Sepertinya Belum Dibuat");
         setTimeout(joinRoom, 5000); // Contoh: Coba lagi setelah 5 detik
@@ -74,24 +73,20 @@ udpServer.on('message', (msg, rinfo) => {
         let disMessage = utils.DISObjectFromBuffer(msg);
         switch(disMessage.pduType) {
             case 1: // EntityState PDU:
-                console.log(disMessage.entityOrientation.psi)
                 let entityID = disMessage.entityID;
                 let location = disMessage.entityLocation;
                 let marking  = disMessage.marking.getMarking();
-                var gps = projector.unproject(location.x, location.y, location.z);
+                
+                let gps = projector.unproject(location.x, location.y, location.z);
+                
                 console.log("Got EntityState:", entityID, "Location", location, "Marking: \'" + marking + "\'");
-                const heading = getOrientationFromEuler(
-                    location.x,
-                    location.y,
-                    disMessage.entityOrientation.psi,
-                    disMessage.entityOrientation.theta
-                );
-                console.log({heading})
-                controlClient.send('coba', {
-                    x: gps[1],
-                    y: gps[0],
-                    z: gps[2],
+
+                colyseusClient.send('movementPrepar3D', {
+                    id: "satuan_11_470_497",
+                    lng: gps[1],
+                    lat: gps[0],
                 })
+
                 break;
             case 20: // Data PDU:
                 console.log("Got DataPDU:");
